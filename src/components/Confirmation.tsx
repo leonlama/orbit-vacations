@@ -8,8 +8,11 @@ import type {
 } from '../types'
 import { describeWindow, formatDays, formatMoney } from '../lib/format'
 import { SEAT_TYPE_LABEL } from '../lib/pricing'
+import { assembleTicket } from '../lib/ticket'
 import { Brand } from './ui'
 import { FinePrint } from './FinePrint'
+
+type PdfState = 'idle' | 'working' | 'done' | 'error'
 
 export function Confirmation({
   quote,
@@ -28,7 +31,22 @@ export function Confirmation({
   bookingRef: string
   onBookAnother: () => void
 }) {
-  const [pdfNote, setPdfNote] = useState(false)
+  const [pdf, setPdf] = useState<PdfState>('idle')
+
+  const downloadTicket = async () => {
+    if (pdf === 'working') return
+    setPdf('working')
+    try {
+      const data = assembleTicket({ quote, breakdown, seat, extras, passenger, bookingRef })
+      // Lazy-load the PDF engine only when actually downloading.
+      const { downloadTicketPdf } = await import('./TicketPdf')
+      await downloadTicketPdf(data)
+      setPdf('done')
+    } catch (err) {
+      console.error('Ticket PDF generation failed:', err)
+      setPdf('error')
+    }
+  }
 
   return (
     <section className="mx-auto max-w-4xl px-6 animate-rise">
@@ -144,19 +162,30 @@ export function Confirmation({
       {/* actions */}
       <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
         <button
-          onClick={() => setPdfNote(true)}
-          className="btn-amber rounded-full px-7 py-3 text-sm"
+          onClick={downloadTicket}
+          disabled={pdf === 'working'}
+          className="btn-amber rounded-full px-7 py-3 text-sm disabled:cursor-wait disabled:opacity-60"
         >
-          ⬇ Download ticket (PDF)
+          {pdf === 'working' ? 'Generating PDF…' : '⬇ Download ticket (PDF)'}
         </button>
         <button onClick={onBookAnother} className="btn-ghost rounded-full px-6 py-3 text-sm">
           Book another voyage
         </button>
       </div>
-      {pdfNote && (
-        <p className="mt-3 text-center text-xs text-cream-dim animate-rise">
-          🛠 PDF ticket export is coming in the next update — this button is a
-          stub for now.
+      {pdf === 'done' && (
+        <p className="mt-3 text-center text-xs text-teal animate-rise">
+          ✓ Your e-ticket{' '}
+          <span className="font-mono text-cream">orbit-vacations-ticket-{bookingRef}.pdf</span>{' '}
+          has been downloaded.
+        </p>
+      )}
+      {pdf === 'error' && (
+        <p className="mt-3 text-center text-xs text-rose animate-rise">
+          Something went wrong generating the PDF.{' '}
+          <button onClick={downloadTicket} className="underline hover:text-amber">
+            Try again
+          </button>
+          .
         </p>
       )}
 
