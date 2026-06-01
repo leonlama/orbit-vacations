@@ -1,0 +1,227 @@
+@import 'tailwindcss';
+
+/* ------------------------------------------------------------------ */
+/* Design tokens — a cohesive retro space-age travel-agency palette.   */
+/* Deep space navy + warm amber/coral accents + cream, in the spirit   */
+/* of the JPL "Visions of the Future" mid-century travel posters.      */
+/* ------------------------------------------------------------------ */
+@theme {
+  --color-space-950: #060914;
+  --color-space-900: #0a0f24;
+  --color-space-850: #0f1530;
+  --color-space-800: #151d3e;
+  --color-space-700: #20294f;
+  --color-space-600: #2d3866;
+
+  --color-cream: #f3e8d2;
+  --color-cream-dim: #cdc2a8;
+  --color-parchment: #e9dcc0;
+
+  --color-amber: #e9a23b;
+  --color-amber-bright: #f6c25c;
+  --color-coral: #e2654a;
+  --color-rust: #c14a32;
+  --color-rose: #d98a6a;
+  --color-teal: #74a89c;
+  --color-dusk: #7b6cc0;
+
+  --font-display: 'Fraunces', ui-serif, Georgia, serif;
+  --font-sans: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Space Mono', ui-monospace, 'SFMono-Regular', monospace;
+
+  --radius-poster: 1.25rem;
+}
+
+/* ------------------------------------------------------------------ */
+/* Base                                                                */
+/* ------------------------------------------------------------------ */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    color: var(--color-cream);
+    background-color: var(--color-space-950);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Deep-space backdrop: layered radial glows over near-black navy. */
+  .bg-cosmos {
+    background:
+      radial-gradient(
+        110% 70% at 80% -10%,
+        rgba(233, 162, 59, 0.18),
+        transparent 55%
+      ),
+      radial-gradient(
+        90% 60% at 10% 110%,
+        rgba(123, 108, 192, 0.16),
+        transparent 55%
+      ),
+      radial-gradient(
+        60% 50% at 50% 0%,
+        rgba(226, 101, 74, 0.1),
+        transparent 60%
+      ),
+      var(--color-space-950);
+  }
+
+  ::selection {
+    background: var(--color-amber);
+    color: var(--color-space-950);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Texture: faint film grain + drifting starfield for craft.           */
+/* ------------------------------------------------------------------ */
+.grain::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.starfield {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-repeat: repeat;
+  background-image:
+    radial-gradient(1.4px 1.4px at 20px 30px, rgba(243, 232, 210, 0.9), transparent),
+    radial-gradient(1.2px 1.2px at 130px 80px, rgba(243, 232, 210, 0.7), transparent),
+    radial-gradient(1px 1px at 70px 160px, rgba(246, 194, 92, 0.7), transparent),
+    radial-gradient(1.6px 1.6px at 200px 120px, rgba(243, 232, 210, 0.65), transparent),
+    radial-gradient(1px 1px at 280px 40px, rgba(243, 232, 210, 0.6), transparent),
+    radial-gradient(1.2px 1.2px at 340px 200px, rgba(116, 168, 156, 0.7), transparent);
+  background-size: 380px 280px;
+  animation: drift 180s linear infinite;
+}
+
+@keyframes drift {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 380px 280px;
+  }
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.85;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .starfield {
+    animation: none;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Reusable craft utilities                                            */
+/* ------------------------------------------------------------------ */
+@layer components {
+  /* Tiny mono label, letter-spaced — the "stamp / form field" voice. */
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--color-amber);
+  }
+
+  /* Primary amber button with a mid-century pill shape. */
+  .btn-amber {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    background: linear-gradient(
+      180deg,
+      var(--color-amber-bright),
+      var(--color-amber)
+    );
+    color: var(--color-space-950);
+    border: 1px solid rgba(246, 194, 92, 0.6);
+    box-shadow: 0 0 0 0 rgba(233, 162, 59, 0.5);
+    transition:
+      transform 0.18s ease,
+      box-shadow 0.25s ease,
+      filter 0.18s ease;
+  }
+  .btn-amber:hover {
+    transform: translateY(-1px);
+    filter: saturate(1.08);
+    box-shadow: 0 8px 30px -6px rgba(233, 162, 59, 0.55);
+  }
+  .btn-amber:active {
+    transform: translateY(0);
+  }
+
+  .btn-ghost {
+    font-family: var(--font-sans);
+    font-weight: 500;
+    color: var(--color-cream);
+    border: 1px solid rgba(243, 232, 210, 0.28);
+    background: rgba(243, 232, 210, 0.03);
+    transition:
+      border-color 0.2s ease,
+      background 0.2s ease;
+  }
+  .btn-ghost:hover {
+    border-color: rgba(233, 162, 59, 0.6);
+    background: rgba(233, 162, 59, 0.07);
+  }
+
+  /* Hairline divider with a centered diamond — period detailing. */
+  .rule-diamond {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: rgba(243, 232, 210, 0.3);
+  }
+  .rule-diamond::before,
+  .rule-diamond::after {
+    content: '';
+    height: 1px;
+    flex: 1;
+    background: currentColor;
+  }
+}
+
+/* A subtle entrance used across steps. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-rise {
+  animation: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.animate-spin-slow {
+  animation: spin-slow 2.4s linear infinite;
+}

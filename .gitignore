@@ -4,3 +4,11 @@ __pycache__/
 .venv/
 venv/
 *.egg-info/
+.vercel
+
+# Node / Vite frontend
+node_modules/
+dist/
+*.local
+.DS_Store
+npm-debug.log*
