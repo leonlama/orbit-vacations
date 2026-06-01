@@ -47,4 +47,55 @@ export interface Quote {
   assumptions: string
 }
 
-export type Step = 'hero' | 'destination' | 'rocket' | 'itinerary'
+export type Step =
+  | 'hero'
+  | 'destination'
+  | 'rocket'
+  | 'itinerary'
+  | 'seats'
+  | 'extras'
+  | 'passenger'
+  | 'checkout'
+  | 'confirmation'
+
+// ---- Booking selections ------------------------------------------------
+
+export type SeatType = 'standard' | 'window' | 'cupola'
+
+export interface SeatDef {
+  id: string // e.g. "3A" or "P1"
+  row: number
+  col: string
+  type: SeatType
+  occupied: boolean
+}
+
+export interface ExtrasState {
+  cryo: boolean
+  radiation: boolean
+  baggageKg: number
+  habitat: string | null // habitat tier id
+  roundTrip: boolean
+}
+
+export interface Passenger {
+  name: string
+  email: string
+}
+
+// ---- Fare breakdown ----------------------------------------------------
+
+export interface FareLine {
+  id: string
+  label: string
+  detail?: string
+  amount: number // per-leg unit amount (USD)
+  perLeg: boolean // doubled when round-trip
+}
+
+export interface FareBreakdown {
+  lines: FareLine[]
+  legs: number // 1 (one-way) or 2 (round-trip)
+  total: number
+  baseFareEstimated: boolean // true when the engine had no published $/kg
+}

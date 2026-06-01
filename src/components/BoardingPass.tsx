@@ -1,22 +1,21 @@
 import type { Quote } from '../types'
 import {
-  cadenceMonths,
+  describeWindow,
   formatDays,
   formatKg,
   formatKms,
   formatPerKg,
   formatUSD,
-  formatWindowDate,
 } from '../lib/format'
 import { PayloadBadge } from './ui'
 
 export function BoardingPass({
   quote,
-  onRebook,
+  onContinue,
   onChangeRocket,
 }: {
   quote: Quote
-  onRebook: () => void
+  onContinue: () => void
   onChangeRocket: () => void
 }) {
   const { rocket } = quote
@@ -121,7 +120,7 @@ export function BoardingPass({
                 Departures
               </div>
               <p className="mt-1 text-sm leading-snug text-cream">
-                {windowText(quote)}
+                {describeWindow(quote)}
               </p>
             </div>
           </div>
@@ -133,26 +132,12 @@ export function BoardingPass({
         <button onClick={onChangeRocket} className="btn-ghost rounded-full px-6 py-2.5 text-sm">
           ← Change rocket
         </button>
-        <button onClick={onRebook} className="btn-amber rounded-full px-7 py-2.5 text-sm">
-          Book another voyage
+        <button onClick={onContinue} className="btn-amber rounded-full px-8 py-3 text-sm">
+          Continue — choose your seat →
         </button>
       </div>
     </section>
   )
-}
-
-// "departs ~every 26 months — next modeled window: <date>" for Mars/Venus;
-// the human cadence note ("≈ monthly") when the API returns no single date.
-function windowText(quote: Quote): string {
-  if (quote.next_window === null) {
-    const note = quote.next_window_note ?? 'frequently'
-    return `Departs ${note} — lunar windows recur far too often to print one date.`
-  }
-  const cadence =
-    quote.synodic_period_days !== null
-      ? `~every ${cadenceMonths(quote.synodic_period_days)} months`
-      : 'periodically'
-  return `Departs ${cadence} — next modeled window: ${formatWindowDate(quote.next_window)}.`
 }
 
 function makeFlightNo(quote: Quote): string {
