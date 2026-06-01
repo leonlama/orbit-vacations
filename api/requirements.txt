@@ -1,0 +1,8 @@
+# The /api functions (catalog.py, quote.py) and the orbital engine use only
+# the Python standard library — there are no runtime dependencies to install.
+#
+# This file is intentionally empty of packages; its presence makes Vercel
+# reliably detect and provision the Python runtime for the /api functions.
+# The Python version is pinned to 3.12 via the project-root .python-version
+# file, and the local `orbital` package is bundled with each function via
+# functions[].includeFiles in vercel.json.

@@ -69,9 +69,13 @@ def build_quote(destination, rocket_name, base_epoch=None):
     if dest_key == "moon":
         next_window = None
         next_window_note = "≈ monthly"
+        # The LEO-vs-Moon synodic period is physically meaningless here, so we
+        # do not surface it (the note carries the cadence instead).
+        synodic_period_days = None
     else:
         next_window = transfer["next_launch_window"].isoformat()
         next_window_note = None
+        synodic_period_days = transfer["synodic_period_days"]
 
     # Normalize payload basis to the documented values.
     payload_basis = "published" if trip["payload_source"] == "published" else "estimate"
@@ -88,6 +92,7 @@ def build_quote(destination, rocket_name, base_epoch=None):
         "transfer_time_days": transfer["transfer_time_days"],
         "next_window": next_window,
         "next_window_note": next_window_note,
+        "synodic_period_days": synodic_period_days,
         "rocket": {
             "name": trip["rocket"],
             "feasible": trip["feasible"],

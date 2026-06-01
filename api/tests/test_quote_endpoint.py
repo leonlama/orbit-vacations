@@ -34,6 +34,8 @@ def test_mars_quote_keys_and_values():
     # Interplanetary -> a real ISO launch window, no cadence note.
     assert q["next_window"] is not None
     assert q["next_window_note"] is None
+    # Synodic period exposed for the "every ~26 months" cadence text (~779.9 d).
+    assert q["synodic_period_days"] == pytest.approx(779.9, rel=0.05)
     assert q["assumptions"]  # non-empty disclaimer
 
 
@@ -43,6 +45,8 @@ def test_moon_quote_uses_cadence_not_synodic_date():
     # Moon: no single synodic date; null window + human cadence string.
     assert q["next_window"] is None
     assert q["next_window_note"] == "≈ monthly"
+    # No meaningful synodic date for the Moon.
+    assert q["synodic_period_days"] is None
     # Saturn V TLI is a published figure.
     assert q["rocket"]["payload_basis"] == "published"
     assert q["rocket"]["deliverable_payload_kg"] == 43500
