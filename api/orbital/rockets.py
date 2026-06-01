@@ -37,12 +37,15 @@ class Rocket:
         not yet flown (e.g. Starship); True for flight-proven vehicles.
     """
 
-    def __init__(self, name, payloads, cost_usd, demonstrated=True, notes=""):
+    def __init__(self, name, payloads, cost_usd, demonstrated=True, notes="",
+                 id=None):
         self.name = name
         self.payloads = payloads
         self.cost_usd = cost_usd
         self.demonstrated = demonstrated
         self.notes = notes
+        # Stable, URL-safe identifier (e.g. "falcon-9") used by the API layer.
+        self.id = id if id is not None else name.lower().replace(" ", "-")
 
     def __repr__(self):
         return f"Rocket({self.name!r})"
@@ -101,14 +104,24 @@ ROCKETS = {
 }
 
 
+# Secondary index by URL-safe id (e.g. "falcon-9") so callers may use either
+# the spaced display name or the slug id.
+ROCKETS_BY_ID = {r.id: r for r in ROCKETS.values()}
+
+
 def get_rocket(name):
-    """Look up a rocket by name (case-insensitive)."""
+    """Look up a rocket by display name or id (both case-insensitive).
+
+    Accepts e.g. "Falcon 9", "falcon 9", or "falcon-9".
+    """
     key = name.strip().lower()
-    if key not in ROCKETS:
-        raise ValueError(
-            f"Unknown rocket {name!r}; choose from {sorted(ROCKETS)}"
-        )
-    return ROCKETS[key]
+    if key in ROCKETS:
+        return ROCKETS[key]
+    if key in ROCKETS_BY_ID:
+        return ROCKETS_BY_ID[key]
+    raise ValueError(
+        f"Unknown rocket {name!r}; choose from {sorted(ROCKETS_BY_ID)}"
+    )
 
 
 # Which published payload capacity key best matches each destination, and
