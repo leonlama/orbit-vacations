@@ -8,4 +8,11 @@ import tailwindcss from '@tailwindcss/vite'
 // relative paths (/api/catalog, /api/quote) and needs no proxy config here.
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  build: {
+    // @react-pdf/renderer is large but is dynamically imported (loaded only
+    // when a user downloads their ticket), so it lands in its own lazy chunk
+    // and never bloats the initial bundle. Raise the warning limit to reflect
+    // that this big chunk is intentional and off the critical path.
+    chunkSizeWarningLimit: 1600,
+  },
 })
