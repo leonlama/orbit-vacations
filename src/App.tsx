@@ -1,13 +1,36 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ApiError, fetchCatalog, fetchQuote } from './api'
-import type { Catalog, Destination, Quote, Rocket, Step } from './types'
+import type {
+  Catalog,
+  Destination,
+  ExtrasState,
+  Passenger,
+  Quote,
+  Rocket,
+  SeatDef,
+  Step,
+} from './types'
+import { computeBreakdown, makeBookingRef } from './lib/pricing'
 import { Hero } from './components/Hero'
 import { Stepper } from './components/Stepper'
 import { DestinationSelect } from './components/DestinationSelect'
 import { RocketSelect } from './components/RocketSelect'
 import { BoardingPass } from './components/BoardingPass'
+import { SeatSelect } from './components/SeatSelect'
+import { ExtrasSelect } from './components/ExtrasSelect'
+import { PassengerDetails } from './components/PassengerDetails'
+import { Checkout } from './components/Checkout'
+import { Confirmation } from './components/Confirmation'
 import { FinePrint } from './components/FinePrint'
 import { Brand, ErrorPanel, OrbitSpinner } from './components/ui'
+
+const DEFAULT_EXTRAS: ExtrasState = {
+  cryo: false,
+  radiation: false,
+  baggageKg: 0,
+  habitat: null,
+  roundTrip: false,
+}
 
 export function App() {
   const [step, setStep] = useState<Step>('hero')
@@ -26,6 +49,17 @@ export function App() {
   const [quoteError, setQuoteError] = useState<string | null>(null)
   const [loadingQuote, setLoadingQuote] = useState(false)
 
+  // Booking journey.
+  const [seat, setSeat] = useState<SeatDef | null>(null)
+  const [extras, setExtras] = useState<ExtrasState>(DEFAULT_EXTRAS)
+  const [passenger, setPassenger] = useState<Passenger>({ name: '', email: '' })
+  const [bookingRef, setBookingRef] = useState<string | null>(null)
+
+  const breakdown = useMemo(
+    () => (quote ? computeBreakdown(quote, seat, extras) : null),
+    [quote, seat, extras],
+  )
+
   const loadCatalog = useCallback(async () => {
     setLoadingCatalog(true)
     setCatalogError(null)
@@ -43,34 +77,39 @@ export function App() {
     if (!catalog) void loadCatalog()
   }, [catalog, loadCatalog])
 
-  const chooseDestination = useCallback((d: Destination) => {
-    setDestination(d)
-    setRocket(null)
-    setQuote(null)
-    setStep('rocket')
+  const resetBooking = useCallback(() => {
+    setSeat(null)
+    setExtras(DEFAULT_EXTRAS)
+    setBookingRef(null)
   }, [])
 
-  const loadQuote = useCallback(
-    async (d: Destination, r: Rocket) => {
-      setLoadingQuote(true)
-      setQuoteError(null)
+  const chooseDestination = useCallback(
+    (d: Destination) => {
+      setDestination(d)
+      setRocket(null)
       setQuote(null)
-      try {
-        setQuote(await fetchQuote(d.id, r.id))
-      } catch (err) {
-        if (err instanceof ApiError && err.status === 400) {
-          setQuoteError(
-            `That combination isn't bookable: ${err.message}`,
-          )
-        } else {
-          setQuoteError(err instanceof Error ? err.message : 'Unknown error.')
-        }
-      } finally {
-        setLoadingQuote(false)
-      }
+      resetBooking()
+      setStep('rocket')
     },
-    [],
+    [resetBooking],
   )
+
+  const loadQuote = useCallback(async (d: Destination, r: Rocket) => {
+    setLoadingQuote(true)
+    setQuoteError(null)
+    setQuote(null)
+    try {
+      setQuote(await fetchQuote(d.id, r.id))
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 400) {
+        setQuoteError(`That combination isn't bookable: ${err.message}`)
+      } else {
+        setQuoteError(err instanceof Error ? err.message : 'Unknown error.')
+      }
+    } finally {
+      setLoadingQuote(false)
+    }
+  }, [])
 
   const chooseRocket = useCallback(
     (r: Rocket) => {
@@ -81,13 +120,19 @@ export function App() {
     [destination, loadQuote],
   )
 
-  const rebook = useCallback(() => {
+  const confirmPayment = useCallback(() => {
+    if (destination) setBookingRef(makeBookingRef(destination.id))
+    setStep('confirmation')
+  }, [destination])
+
+  const bookAnother = useCallback(() => {
     setDestination(null)
     setRocket(null)
     setQuote(null)
     setQuoteError(null)
+    resetBooking()
     setStep('destination')
-  }, [])
+  }, [resetBooking])
 
   // Keep the document title in step with the flow.
   useEffect(() => {
@@ -156,19 +201,73 @@ export function App() {
               {quote && (
                 <BoardingPass
                   quote={quote}
-                  onRebook={rebook}
+                  onContinue={() => setStep('seats')}
                   onChangeRocket={() => setStep('rocket')}
                 />
               )}
             </ItineraryGate>
           )}
+
+          {step === 'seats' && quote && breakdown && (
+            <SeatSelect
+              quote={quote}
+              breakdown={breakdown}
+              selected={seat}
+              onSelect={setSeat}
+              onBack={() => setStep('itinerary')}
+              onContinue={() => setStep('extras')}
+            />
+          )}
+
+          {step === 'extras' && quote && breakdown && (
+            <ExtrasSelect
+              quote={quote}
+              breakdown={breakdown}
+              extras={extras}
+              onChange={setExtras}
+              onBack={() => setStep('seats')}
+              onContinue={() => setStep('passenger')}
+            />
+          )}
+
+          {step === 'passenger' && quote && breakdown && (
+            <PassengerDetails
+              quote={quote}
+              breakdown={breakdown}
+              passenger={passenger}
+              onChange={setPassenger}
+              onBack={() => setStep('extras')}
+              onContinue={() => setStep('checkout')}
+            />
+          )}
+
+          {step === 'checkout' && quote && breakdown && (
+            <Checkout
+              quote={quote}
+              breakdown={breakdown}
+              passenger={passenger}
+              onBack={() => setStep('passenger')}
+              onConfirm={confirmPayment}
+            />
+          )}
+
+          {step === 'confirmation' && quote && breakdown && bookingRef && (
+            <Confirmation
+              quote={quote}
+              breakdown={breakdown}
+              seat={seat}
+              extras={extras}
+              passenger={passenger}
+              bookingRef={bookingRef}
+              onBookAnother={bookAnother}
+            />
+          )}
         </main>
 
-        {/* Show the conditions of carriage once a quote (with its disclaimer)
-            exists; otherwise a tasteful default still appears in the footer. */}
-        {step === 'itinerary' && quote && (
-          <FinePrint assumptions={quote.assumptions} />
-        )}
+        {/* The conditions of carriage live inside the itinerary/confirmation
+            screens (which carry the engine's disclaimer); show a default in
+            the pre-quote steps too. */}
+        {step === 'itinerary' && quote && <FinePrint assumptions={quote.assumptions} />}
       </div>
     </div>
   )
