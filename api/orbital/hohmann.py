@@ -42,6 +42,42 @@ from datetime import date, timedelta
 
 from . import constants
 
+# One-line idealized-model disclaimer suitable for surfacing in an API
+# response.  See this module's docstring for the full list of assumptions.
+ASSUMPTIONS = (
+    "Idealized coplanar two-impulse Hohmann transfer: circular, coplanar "
+    "orbits, two-body patched math, and instantaneous (impulsive) burns. "
+    "No plane-change delta-v, no patched-conic escape/capture, and no "
+    "gravity losses are included, so figures match textbook values but "
+    "understate real mission budgets. Launch windows are idealized."
+)
+
+# Metadata for the destinations we model, keyed by their id.  Used by the
+# API layer to populate frontend menus without hard-coding strings there.
+DESTINATION_META = {
+    "mars": {
+        "id": "mars",
+        "name": "Mars",
+        "central_body": "Sun",
+        "description": "Heliocentric Hohmann transfer from Earth's orbit to "
+        "Mars' orbit (the classic ~6-month interplanetary cruise).",
+    },
+    "venus": {
+        "id": "venus",
+        "name": "Venus",
+        "central_body": "Sun",
+        "description": "Heliocentric Hohmann transfer inward from Earth's "
+        "orbit to Venus' orbit.",
+    },
+    "moon": {
+        "id": "moon",
+        "name": "Moon",
+        "central_body": "Earth",
+        "description": "Geocentric Hohmann transfer from Low Earth Orbit to "
+        "the Moon's orbit; the departure burn is trans-lunar injection (TLI).",
+    },
+}
+
 
 def vis_viva(mu, r, a):
     """Orbital speed (m/s) from the vis-viva equation.
